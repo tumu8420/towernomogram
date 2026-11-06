@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TowerNomogram — Resurrecting the Paper Nomogram | Kiroween 2026</title>
+<meta name="description" content="TowerNomogram is an interactive wind-turbine tower nomogram calculator for onshore towers. Simplified educational estimates only — not for structural design.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <p class="eyebrow">Kiroween 2026 &middot; Resurrection &middot; Chengwan Wu</p>
+    <h1>TowerNomogram</h1>
+    <p class="subtitle">Resurrecting the paper nomogram &mdash; an interactive wind-turbine tower calculator for onshore towers.</p>
+    <div class="header-actions">
+      <button id="themeToggle" type="button" aria-pressed="false" title="Toggle midnight theme">&#127769; Midnight theme</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="disclaimer" role="note" aria-label="Safety disclaimer">
+    <strong>&#9888; Safety disclaimer &mdash; read first.</strong>
+    TowerNomogram is a <strong>simplified educational / preliminary-exploration tool only</strong>.
+    It is <strong>NOT</strong> for actual structural design, certification, or construction decisions.
+    All results are rough estimates from a simplified model and <strong>must be verified with proper
+    engineering analysis by a qualified engineer</strong> before any real-world use.
+  </section>
+
+  <section class="panel" aria-labelledby="inputs-heading">
+    <h2 id="inputs-heading">Tower inputs</h2>
+    <p class="hint">Move a slider or type a value. The outputs and the nomogram update live. Ranges are the model&rsquo;s valid envelope; values outside it are not accepted.</p>
+
+    <div class="presets" role="group" aria-label="Reference turbine presets">
+      <span class="presets-label">Presets:</span>
+      <button type="button" class="preset" data-preset="2mw">2 MW &mdash; 80 m hub</button>
+      <button type="button" class="preset" data-preset="4mw">4 MW &mdash; 100 m hub</button>
+      <button type="button" class="preset" data-preset="6mw">6 MW &mdash; 120 m hub</button>
+      <button type="button" class="preset preset-reset" id="resetBtn">Reset to 4 MW</button>
+    </div>
+
+    <div class="controls" id="controls">
+      <!-- Each control: label, slider, numeric input, unit. Wired in app.js by data-field. -->
+      <div class="control">
+        <label for="hubHeight">Hub height <span class="unit">m</span></label>
+        <input type="range" id="hubHeight" data-field="hubHeight" min="60" max="160" step="1" value="100">
+        <input type="number" data-number="hubHeight" min="60" max="160" step="1" value="100" aria-label="Hub height in metres">
+      </div>
+      <div class="control">
+        <label for="rotorDiameter">Rotor diameter <span class="unit">m</span></label>
+        <input type="range" id="rotorDiameter" data-field="rotorDiameter" min="80" max="180" step="1" value="130">
+        <input type="number" data-number="rotorDiameter" min="80" max="180" step="1" value="130" aria-label="Rotor diameter in metres">
+      </div>
+      <div class="control">
+        <label for="ratedPower">Rated power <span class="unit">MW</span></label>
+        <input type="range" id="ratedPower" data-field="ratedPower" min="2" max="8" step="0.5" value="4">
+        <input type="number" data-number="ratedPower" min="2" max="8" step="0.5" value="4" aria-label="Rated power in megawatts">
+      </div>
+      <div class="control">
+        <label for="topMass">Tower-top mass (nacelle + rotor) <span class="unit">t</span></label>
+        <input type="range" id="topMass" data-field="topMass" min="80" max="400" step="5" value="200">
+        <input type="number" data-number="topMass" min="80" max="400" step="5" value="200" aria-label="Tower-top mass in tonnes">
+      </div>
+      <div class="control">
+        <label for="baseDiameter">Base diameter <span class="unit">m</span></label>
+        <input type="range" id="baseDiameter" data-field="baseDiameter" min="3" max="7" step="0.1" value="5">
+        <input type="number" data-number="baseDiameter" min="3" max="7" step="0.1" value="5" aria-label="Base diameter in metres">
+      </div>
+      <div class="control">
+        <label for="wallThickness">Wall thickness at base <span class="unit">mm</span></label>
+        <input type="range" id="wallThickness" data-field="wallThickness" min="10" max="80" step="1" value="30">
+        <input type="number" data-number="wallThickness" min="10" max="80" step="1" value="30" aria-label="Wall thickness at base in millimetres">
+      </div>
+      <div class="control">
+        <label for="steelGrade">Steel grade</label>
+        <select id="steelGrade" data-field="steelGrade">
+          <option value="S355" selected>S355 (f<sub>y</sub> = 355 MPa)</option>
+          <option value="S420">S420 (f<sub>y</sub> = 420 MPa)</option>
+          <option value="S460">S460 (f<sub>y</sub> = 460 MPa)</option>
+        </select>
+        <span class="control-note">Yield strength is used only for the simplified base-stress utilisation check.</span>
+      </div>
+      <div class="control">
+        <label for="windClass">Wind class (IEC)</label>
+        <select id="windClass" data-field="windClass">
+          <option value="I">Class I &mdash; V<sub>ref</sub> 50.0 m/s</option>
+          <option value="II" selected>Class II &mdash; V<sub>ref</sub> 42.5 m/s</option>
+          <option value="III">Class III &mdash; V<sub>ref</sub> 37.5 m/s</option>
+        </select>
+        <span class="control-note">Sets the characteristic operating wind speed used for the thrust estimate (see README).</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="outputs-heading">
+    <h2 id="outputs-heading">Results &mdash; simplified estimates</h2>
+    <p class="hint">Educational estimates from the simplified model documented in the README and in <code>app.js</code>. They are not design values.</p>
+    <div class="outputs">
+      <article class="output-card">
+        <h3>Tower mass</h3>
+        <p class="output-value"><span id="outMass">&mdash;</span> <span class="output-unit">t</span></p>
+        <p class="output-note">Steel shell + 8% allowance for flanges and internals.</p>
+      </article>
+      <article class="output-card">
+        <h3>First natural frequency</h3>
+        <p class="output-value"><span id="outFreq">&mdash;</span> <span class="output-unit">Hz</span></p>
+        <p class="output-note">Simplified cantilever-beam model, first bending mode.</p>
+      </article>
+      <article class="output-card">
+        <h3>Tip deflection (rated wind)</h3>
+        <p class="output-value"><span id="outDefl">&mdash;</span> <span class="output-unit">m</span></p>
+        <p class="output-note">Steady thrust at the characteristic operating wind speed; no dynamics or gust factor.</p>
+      </article>
+      <article class="output-card">
+        <h3>Slenderness ratio</h3>
+        <p class="output-value"><span id="outSlender">&mdash;</span></p>
+        <p class="output-note">Hub height / base diameter (H / D<sub>base</sub>).</p>
+      </article>
+    </div>
+    <dl class="supplementary">
+      <div><dt>Rotor swept area</dt><dd id="outArea">&mdash;</dd></div>
+      <div><dt>Steady thrust at hub</dt><dd id="outThrust">&mdash;</dd></div>
+      <div><dt>Base bending moment</dt><dd id="outMoment">&mdash;</dd></div>
+      <div><dt>Base bending stress</dt><dd id="outStress">&mdash;</dd></div>
+      <div><dt>Stress utilisation (vs f<sub>y</sub>/1.1)</dt><dd id="outUtil">&mdash;</dd></div>
+      <div><dt>Operating wind speed</dt><dd id="outWind">&mdash;</dd></div>
+    </dl>
+  </section>
+
+  <section class="panel" aria-labelledby="nomogram-heading">
+    <h2 id="nomogram-heading">Interactive nomogram</h2>
+    <p class="hint">First natural frequency and tower mass versus hub height, for three base diameters around the current one. The dot marks the current tower. The shaded band is a typical soft&ndash;soft frequency window (illustrative only, 0.20&ndash;0.35 Hz) &mdash; it is not a design criterion.</p>
+    <div class="chart-wrap">
+      <svg id="nomogram" viewBox="0 0 760 420" role="img" aria-label="Nomogram chart of first natural frequency and tower mass versus hub height"></svg>
+    </div>
+    <p class="chart-legend" id="chartLegend"></p>
+    <table class="mini-table" id="curveTable">
+      <caption>Values at the current hub height, for the three base diameters shown</caption>
+      <thead><tr><th>Base diameter (m)</th><th>First natural frequency (Hz)</th><th>Tower mass (t)</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section class="panel" aria-labelledby="compare-heading">
+    <h2 id="compare-heading">Compare &amp; export</h2>
+    <p class="hint">Snapshot the current tower into the comparison table, then export the table as CSV. Up to 8 snapshots are kept.</p>
+    <div class="compare-actions">
+      <button type="button" id="addCompareBtn">Add current tower to comparison</button>
+      <button type="button" id="exportCsvBtn">Export comparison as CSV</button>
+      <button type="button" id="clearCompareBtn">Clear comparison</button>
+    </div>
+    <div class="table-scroll">
+      <table class="compare-table" id="compareTable">
+        <thead>
+          <tr>
+            <th>#</th><th>Label</th><th>Hub (m)</th><th>Rotor (m)</th><th>Power (MW)</th><th>Top mass (t)</th><th>Base &Oslash; (m)</th><th>Wall (mm)</th><th>Grade</th><th>Wind</th><th>Mass (t)</th><th>f&#8321; (Hz)</th><th>Tip defl. (m)</th><th>H/D</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="empty-row"><td colspan="14">No snapshots yet. Adjust the inputs and press &ldquo;Add current tower to comparison&rdquo;.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="how-heading">
+    <h2 id="how-heading">How the calculation works</h2>
+    <p>Full assumptions, formulas and limits are listed in <code>README.md</code> and as comments in <code>app.js</code>. In short:</p>
+    <ul>
+      <li><strong>Tower mass</strong> &mdash; thin-walled circular shell, linearly tapered diameter and thickness, plus an 8% allowance for flanges and internals.</li>
+      <li><strong>First natural frequency</strong> &mdash; cantilever beam: <code>f&#8321; = (1/2&pi;) &middot; &radic;(3EI<sub>eff</sub> / H&sup3; / m<sub>eq</sub>)</code>, with <code>m<sub>eq</sub> = M<sub>top</sub> + 0.24 &middot; M<sub>tower</sub></code>.</li>
+      <li><strong>Tip deflection</strong> &mdash; steady thrust <code>T = &frac12; &rho; A C<sub>t</sub> V&sup2;</code> at a characteristic operating wind speed, then <code>&delta; = T H&sup3; / (3EI<sub>eff</sub>)</code>.</li>
+      <li><strong>Slenderness</strong> &mdash; <code>H / D<sub>base</sub></code>.</li>
+    </ul>
+    <p>This model ignores taper in the stiffness integral, soil&ndash;structure interaction, damping, aeroelastic effects, fatigue, buckling, transport and erection loads, and all code load cases. That is why it is an educational tool only.</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p><strong>TowerNomogram</strong> &mdash; Kiroween 2026, Resurrection category. Author: Chengwan Wu.</p>
+    <p>Simplified educational / preliminary-exploration tool only. NOT for actual structural design, certification, or construction. Results must be verified by a qualified engineer.</p>
+    <p>Run locally by opening <code>index.html</code> in a browser. No build step, no backend, no external dependencies.</p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
